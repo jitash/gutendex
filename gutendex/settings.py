@@ -14,7 +14,6 @@ import environ
 import os
 import dj_database_url
 
-
 # Import environment variables
 env = environ.Env(
     ADMIN_EMAILS=(list, []),
@@ -26,6 +25,7 @@ env = environ.Env(
 )
 environ.Env.read_env()
 
+STATIC_ROOT = env('STATIC_ROOT')
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import environ
 import os
+import dj_database_url
 
 
 # Import environment variables
@@ -106,7 +107,11 @@ WSGI_APPLICATION = 'gutendex.wsgi.application'
 #         'PORT': env('DATABASE_PORT'),
 #     }
 # }
-DATABASES = {'default': env.db('DATABASE_URL')}
+
+# DATABASES = {'default': env.db('DATABASE_URL')}
+DATABASES = {
+    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+}
 SECRET_KEY = env('SECRET_KEY')
 
 

@@ -1,1 +1,1 @@
-web: gunicorn gutendex.wsgi --bind 0.0.0.0:$PORT
+web: gunicorn gutendex.wsgi:application --bind 0.0.0.0:8000

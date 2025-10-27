@@ -1,5 +1,5 @@
 defusedxml==0.7.1
-Django==4.2.25
+Django>=5.0
 django-cors-headers==4.3.1
 django-environ==0.11.2
 djangorestframework==3.15.2
@@ -8,3 +8,4 @@ psycopg2-binary==2.9.10
 six==1.16.0
 sqlparse>=0.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
 dj-database-url>=1.0.0
+gunicorn

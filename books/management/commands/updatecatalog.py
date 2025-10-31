@@ -14,6 +14,64 @@ from books import utils
 from books.models import *
 
 
+def sync_directories(source_dir, target_dir, delete_after=True):
+    """
+    使用 Python 同步目录，替代 rsync 命令
+    功能：将 source_dir 的内容同步到 target_dir
+    
+    Args:
+        source_dir: 源目录路径
+        target_dir: 目标目录路径
+        delete_after: 是否删除目标目录中源目录不存在的文件
+    """
+    if not os.path.exists(source_dir):
+        raise CommandError(f'Source directory does not exist: {source_dir}')
+    
+    # 确保目标目录存在
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    
+    # 获取源目录和目标目录中的所有文件和目录
+    source_items = set()
+    target_items = set()
+    
+    # 获取源目录中的项目
+    for item in os.listdir(source_dir):
+        source_items.add(item)
+    
+    # 获取目标目录中的项目
+    if os.path.exists(target_dir):
+        for item in os.listdir(target_dir):
+            target_items.add(item)
+    
+    # 如果需要删除目标目录中不存在的文件
+    if delete_after:
+        items_to_delete = target_items - source_items
+        for item in items_to_delete:
+            item_path = os.path.join(target_dir, item)
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+            else:
+                os.remove(item_path)
+    
+    # 复制/更新源目录的文件和目录到目标目录
+    for item in source_items:
+        source_path = os.path.join(source_dir, item)
+        target_path = os.path.join(target_dir, item)
+        
+        if os.path.isdir(source_path):
+            # 如果是目录，递归复制
+            if os.path.exists(target_path):
+                # 如果目标目录已存在，先删除
+                shutil.rmtree(target_path)
+            shutil.copytree(source_path, target_path)
+        else:
+            # 如果是文件，直接复制
+            if os.path.exists(target_path):
+                os.remove(target_path)
+            shutil.copy2(source_path, target_path)
+
+
 TEMP_PATH = settings.CATALOG_TEMP_DIR
 
 URL = 'https://gutenberg.org/cache/epub/feeds/rdf-files.tar.bz2'
@@ -340,19 +398,20 @@ class Command(BaseCommand):
                 shutil.rmtree(path)
 
             log('  Replacing old catalog files...')
-            with open(os.devnull, 'w') as null:
-                with open(LOG_PATH, 'a') as log_file:
-                    call(
-                        [
-                            'rsync',
-                            '-va',
-                            '--delete-after',
-                            MOVE_SOURCE_PATH + '/',
-                            MOVE_TARGET_PATH
-                        ],
-                        stdout=null,
-                        stderr=log_file
-                    )
+            try:
+                # 使用 Python 同步目录，替代 rsync（因为容器中可能没有 rsync）
+                sync_directories(MOVE_SOURCE_PATH, MOVE_TARGET_PATH, delete_after=True)
+            except Exception as e:
+                # 如果同步失败，记录错误但不中断流程
+                error_msg = f'Error syncing directories: {str(e)}'
+                log(error_msg)
+                # 仍然尝试继续处理，使用简单的复制方法作为后备
+                if os.path.exists(MOVE_SOURCE_PATH):
+                    # 如果目标目录存在，先清空它
+                    if os.path.exists(MOVE_TARGET_PATH):
+                        shutil.rmtree(MOVE_TARGET_PATH)
+                    # 复制整个目录
+                    shutil.copytree(MOVE_SOURCE_PATH, MOVE_TARGET_PATH)
 
             log('  Putting the catalog in the database...')
             put_catalog_in_db()

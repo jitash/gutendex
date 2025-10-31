@@ -4,3 +4,6 @@
 catalog_files
 gutendex/.env
 venv
+.vercel
+vercel.json
+.vercelignore

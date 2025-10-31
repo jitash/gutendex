@@ -1,5 +1,17 @@
 # 如何检查同步是否完成
 
+## ⚠️ 重要提示：如果日志文件不存在
+
+如果 `tail /tmp/catalog-sync.log` 显示文件不存在，可能是：
+1. 同步任务还未启动
+2. 在另一个容器实例中运行（Zeabur 可能有多个容器）
+3. 容器重启了，日志丢失
+
+**解决方案：**
+- 检查同步进程：`ps aux | grep updatecatalog`
+- 检查数据库状态：`python manage.py shell -c "from books.models import Book; print(Book.objects.count())"`
+- 如果没有运行，重新启动同步
+
 ## 快速检查方法
 
 ### 方法 1: 使用检查脚本（推荐）

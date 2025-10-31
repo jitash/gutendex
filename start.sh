@@ -26,5 +26,17 @@ if [ "$BOOK_COUNT" = "0" ]; then
     echo ""
 fi
 
+# 启动定时数据同步调度器（如果启用）
+AUTO_SYNC_ENABLED=${AUTO_SYNC_ENABLED:-true}
+if [ "$AUTO_SYNC_ENABLED" = "true" ]; then
+    echo "=== 启动定时数据同步调度器 ==="
+    echo "📅 已启用自动数据同步"
+    echo "⏰ 默认每天自动同步一次（可通过 AUTO_SYNC_TIME 和 AUTO_SYNC_SCHEDULE 环境变量配置）"
+    # 在后台启动调度器
+    (nohup python manage.py start_scheduler > /tmp/scheduler.log 2>&1 &)
+    echo "✅ 定时同步调度器已启动"
+    echo ""
+fi
+
 echo "=== 启动 Gunicorn ==="
 exec gunicorn gutendex.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3

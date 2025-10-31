@@ -2,9 +2,10 @@ from subprocess import call
 import json
 import os
 import shutil
-from time import strftime
+from time import strftime, sleep
 import sys
 import urllib.request
+import urllib.error
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -366,7 +367,59 @@ class Command(BaseCommand):
                 os.makedirs(TEMP_PATH)
 
             log('  Downloading compressed catalog...')
-            urllib.request.urlretrieve(URL, DOWNLOAD_PATH)
+            # 添加重试机制下载文件
+            max_retries = 5
+            retry_delay = 10  # 秒
+            downloaded = False
+            
+            for attempt in range(1, max_retries + 1):
+                try:
+                    log(f'    Attempt {attempt}/{max_retries}...')
+                    # 如果文件已存在但可能不完整，先删除
+                    if os.path.exists(DOWNLOAD_PATH):
+                        file_size = os.path.getsize(DOWNLOAD_PATH)
+                        # 如果文件很小（小于1MB），可能是之前失败的部分下载，删除它
+                        if file_size < 1024 * 1024:  # 1MB
+                            os.remove(DOWNLOAD_PATH)
+                            log(f'    Removed incomplete download ({file_size} bytes)')
+                    
+                    # 下载文件
+                    urllib.request.urlretrieve(URL, DOWNLOAD_PATH)
+                    
+                    # 验证下载的文件大小（至少应该大于某个阈值）
+                    if os.path.exists(DOWNLOAD_PATH):
+                        file_size = os.path.getsize(DOWNLOAD_PATH)
+                        # Project Gutenberg RDF 文件通常大于 100MB
+                        if file_size > 100 * 1024 * 1024:  # 100MB
+                            downloaded = True
+                            log(f'    Download completed: {file_size / (1024*1024):.2f} MB')
+                            break
+                        else:
+                            log(f'    Downloaded file too small ({file_size / (1024*1024):.2f} MB), may be incomplete')
+                            if attempt < max_retries:
+                                os.remove(DOWNLOAD_PATH)
+                                log(f'    Retrying in {retry_delay} seconds...')
+                                sleep(retry_delay)
+                    
+                except (urllib.error.URLError, IOError, OSError) as e:
+                    error_msg = str(e)
+                    log(f'    Download attempt {attempt} failed: {error_msg}')
+                    
+                    # 删除可能的不完整文件
+                    if os.path.exists(DOWNLOAD_PATH):
+                        try:
+                            os.remove(DOWNLOAD_PATH)
+                        except:
+                            pass
+                    
+                    if attempt < max_retries:
+                        log(f'    Retrying in {retry_delay} seconds...')
+                        sleep(retry_delay)
+                    else:
+                        raise CommandError(f'Failed to download catalog after {max_retries} attempts: {error_msg}')
+            
+            if not downloaded:
+                raise CommandError('Failed to download catalog file')
 
             log('  Decompressing catalog...')
             if not os.path.exists(DOWNLOAD_PATH):

@@ -116,3 +116,12 @@ EMAIL_PORT = env.int('EMAIL_PORT', default=587)
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+EMAIL_HOST_ADDRESS = env('EMAIL_HOST_ADDRESS', default='')
+
+# 管理员邮箱（用于发送同步日志）
+ADMIN_EMAILS = env.list('ADMIN_EMAILS', default=[])
+
+# 数据同步目录配置
+CATALOG_TEMP_DIR = env('CATALOG_TEMP_DIR', default='/tmp/gutendex-catalog-temp')
+CATALOG_RDF_DIR = env('CATALOG_RDF_DIR', default='/app/catalog')
+CATALOG_LOG_DIR = env('CATALOG_LOG_DIR', default='/app/logs')

@@ -18,10 +18,11 @@ if [ "$BOOK_COUNT" = "0" ]; then
     echo "⚠️  检测到数据库为空"
     echo "📚 正在后台启动数据同步..."
     echo "⏰ 同步可能需要 30-60 分钟，数据会在后台自动导入"
+    echo "📝 你可以通过日志查看同步进度"
     echo ""
-    # 启动后台同步任务
-    python manage.py updatecatalog > /tmp/catalog-sync.log 2>&1 &
-    echo "同步任务已启动，日志: /tmp/catalog-sync.log"
+    # 启动后台同步任务（使用 nohup 和 & 确保在后台运行）
+    (nohup python manage.py updatecatalog > /tmp/catalog-sync.log 2>&1 &)
+    echo "✅ 同步任务已在后台启动"
     echo ""
 fi
 

@@ -125,3 +125,6 @@ ADMIN_EMAILS = env.list('ADMIN_EMAILS', default=[])
 CATALOG_TEMP_DIR = env('CATALOG_TEMP_DIR', default='/tmp/gutendex-catalog-temp')
 CATALOG_RDF_DIR = env('CATALOG_RDF_DIR', default='/app/catalog')
 CATALOG_LOG_DIR = env('CATALOG_LOG_DIR', default='/app/logs')
+
+# 数据同步 API 令牌（用于通过 HTTP 触发同步）
+SYNC_SECRET_TOKEN = env('SYNC_SECRET_TOKEN', default='')

@@ -140,6 +140,7 @@ def proxy_file(request, book_id, format_str):
 
     # 如果还是没有匹配，尝试通过常见格式标识匹配
     format_mappings = {
+        'txt': 'text/plain',
         'plain': 'text/plain',
         'html': 'text/html',
         'epub': 'application/epub+zip',
@@ -147,10 +148,18 @@ def proxy_file(request, book_id, format_str):
         'pdf': 'application/pdf',
     }
     if not formats.exists() and decoded_format.lower() in format_mappings:
+        target_mime = format_mappings[decoded_format.lower()]
+        # 先尝试精确匹配
         formats = Format.objects.filter(
             book=book,
-            mime_type=format_mappings[decoded_format.lower()]
+            mime_type=target_mime
         )
+        # 如果精确匹配失败，尝试匹配包含该 MIME 类型的格式（处理字符集后缀）
+        if not formats.exists():
+            formats = Format.objects.filter(
+                book=book,
+                mime_type__startswith=target_mime
+            )
 
     if not formats.exists():
         raise Http404("Format not found for this book")

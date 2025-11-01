@@ -10,3 +10,4 @@ sqlparse>=0.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
 dj-database-url>=1.0.0
 gunicorn
 apscheduler>=3.10.4
+requests==2.31.0
